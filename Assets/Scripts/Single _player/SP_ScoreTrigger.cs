@@ -2,13 +2,13 @@ using UnityEngine;
 
 public class SP_ScoreTrigger : MonoBehaviour
 {
-    private SP_ScoreManager scoreManager;
+    public SP_ScoreManager scoreManager;
        
 
 
     private void Start()
     {
-        scoreManager = FindObjectOfType<SP_ScoreManager>();
+        
         if (scoreManager == null)
         {
             Debug.LogError($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [ScoreTrigger] SP_ScoreManager not found in scene!");

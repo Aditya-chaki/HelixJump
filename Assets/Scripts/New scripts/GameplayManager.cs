@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 using Fusion;
 using System.Linq;
@@ -17,6 +18,12 @@ public class GameplayManager : Singleton<GameplayManager>
     public TextMeshProUGUI endGameText; // Reference to the end game text UI element
     public GameObject waitingForPlayerImage; // Reference to the "Waiting for Player" UI element
 
+    // Progress Bar Sliders
+    [SerializeField] private Slider player1Slider; // Slider for Player1's score
+    [SerializeField] private Slider player2Slider; // Slider for Player2's score
+    private readonly Color localPlayerColor = Color.blue; // Color for local player's handle
+    private readonly Color opponentColor = Color.red;     // Color for opponent's handle
+
     public AudioSource gameAudioSource;     // AudioSource for the game music
     public AudioSource gameOverAudioSource; // AudioSource for the game over sound
     private bool isGameEnded = false;
@@ -31,6 +38,17 @@ public class GameplayManager : Singleton<GameplayManager>
     private HelixTowerRotation player2Helix;
     private AudioListener audioListener; // Reference to the AudioListener component
     public bool IsGameStarted => isGameStarted;
+    // Existing fields...
+    private int localPlayer1Score = 0; // Cached Player1 score
+    private int localPlayer2Score = 0; // Cached Player2 score
+
+    // Add a method to update local scores
+    public void UpdateLocalScores(int player1Score, int player2Score)
+    {
+        localPlayer1Score = player1Score;
+        localPlayer2Score = player2Score;
+        Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] Updated local scores: P1={localPlayer1Score}, P2={localPlayer2Score}");
+    }
 
     public override void Awake()
     {
@@ -182,6 +200,26 @@ public class GameplayManager : Singleton<GameplayManager>
             Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] Showing waiting for player image for Player1");
         }
 
+        // Set slider handle colors based on LocalPlayerId
+        if (player1Slider != null && player2Slider != null)
+        {
+            Image player1HandleImage = player1Slider.GetComponentInChildren<Image>();
+            Image player2HandleImage = player2Slider.GetComponentInChildren<Image>();
+            if (player1HandleImage != null && player2HandleImage != null)
+            {
+                if (playerId == "Player1")
+                {
+                    player1HandleImage.color = localPlayerColor;
+                    player2HandleImage.color = opponentColor;
+                }
+                else
+                {
+                    player1HandleImage.color = opponentColor;
+                    player2HandleImage.color = localPlayerColor;
+                }
+            }
+        }
+
         StartCoroutine(WaitForPlayers());
     }
 
@@ -206,10 +244,47 @@ public class GameplayManager : Singleton<GameplayManager>
         {
             StartGame(true);
         }
+
+        // Validate slider UI elements
+        if (player1Slider == null || player2Slider == null)
+        {
+            Debug.LogError($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] Slider UI elements not assigned!");
+        }
+        else
+        {
+            // Initialize sliders
+            player1Slider.minValue = 0;
+            player1Slider.maxValue = scoreManager != null ? scoreManager.scoreToWin : 50;
+            player2Slider.minValue = 0;
+            player2Slider.maxValue = scoreManager != null ? scoreManager.scoreToWin : 50;
+        }
     }
 
     public void StartGameUI()
     {
+        if (scoreboardPanel != null)
+        {
+            scoreboardPanel.SetActive(true);
+            // Rotate scoreboard for Player 2
+            if (LocalPlayerId == "Player2")
+            {
+                RectTransform scoreboardRect = scoreboardPanel.GetComponent<RectTransform>();
+                if (scoreboardRect != null)
+                {
+                    scoreboardRect.rotation = Quaternion.Euler(0, 180, 0);
+                    Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] Rotated scoreboard 180 degrees for Player2");
+                }
+            }
+            else
+            {
+                RectTransform scoreboardRect = scoreboardPanel.GetComponent<RectTransform>();
+                if (scoreboardRect != null)
+                {
+                    scoreboardRect.rotation = Quaternion.Euler(0, 0, 0); // Ensure Player1 has no rotation
+                    Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] Set scoreboard rotation to 0 for Player1");
+                }
+            }
+        }
         if (scoreboardPanel != null) scoreboardPanel.SetActive(true);
         if (scoreText != null) scoreText.gameObject.SetActive(true);
 
@@ -515,6 +590,7 @@ public class GameplayManager : Singleton<GameplayManager>
                     Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] Hiding waiting for player image");
                 }
 
+
                 yield break;
             }
 
@@ -528,19 +604,52 @@ public class GameplayManager : Singleton<GameplayManager>
 
     public void UpdateScoreUI()
     {
-        if (scoreText != null && scoreManager != null && !isGameEnded)
+        if (isGameEnded)
         {
-            scoreText.text = $"{scoreManager.Player1Score}  :  {scoreManager.Player2Score}";
-            Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] Updated score UI: P1={scoreManager.Player1Score}, P2={scoreManager.Player2Score}");
+            Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] Skipping UpdateScoreUI: Game has ended");
+            return;
+        }
+
+        int p1Score, p2Score;
+        if (scoreManager != null && scoreManager.Object != null && scoreManager.Object.Id.IsValid && scoreManager.Object.Runner != null)
+        {
+            p1Score = scoreManager.Player1Score;
+            p2Score = scoreManager.Player2Score;
+            UpdateLocalScores(p1Score, p2Score); // Cache scores
         }
         else
         {
-            Debug.LogError($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] scoreText or scoreManager is not assigned!");
+            p1Score = localPlayer1Score;
+            p2Score = localPlayer2Score;
+            Debug.LogWarning($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] Using cached scores: P1={p1Score}, P2={p2Score}");
+        }
+
+        if (scoreText != null)
+        {
+            scoreText.text = $"{p1Score}  :  {p2Score}";
+            Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] Updated score UI: P1={p1Score}, P2={p2Score}");
+        }
+        else
+        {
+            Debug.LogError($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] scoreText is not assigned!");
+        }
+
+        if (player1Slider != null && player2Slider != null)
+        {
+            player1Slider.value = p1Score;
+            player2Slider.value = p2Score;
+            Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] Updated sliders: P1 Score={p1Score}, P2 Score={p2Score}");
         }
     }
 
     public void EndGame(string winner)
     {
+        if (isGameEnded)
+        {
+            Debug.LogWarning($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] Game already ended, ignoring EndGame call for {winner}");
+            return;
+        }
+        isGameEnded = true;
         Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] {winner} Won!");
         if (gameAudioSource != null && gameAudioSource.isPlaying) gameAudioSource.Stop();
         if (gameOverAudioSource != null) gameOverAudioSource.Play();
@@ -568,18 +677,53 @@ public class GameplayManager : Singleton<GameplayManager>
 
         // Determine winner text and scores
         string winnerText = winner == LocalPlayerId ? "You won!" : "Opponent wins!";
-        int localScore = LocalPlayerId == "Player1" ? scoreManager.Player1Score : scoreManager.Player2Score;
-        int opponentScore = LocalPlayerId == "Player1" ? scoreManager.Player2Score : scoreManager.Player1Score;
-        string message = $"{winnerText}\nYou: {localScore}\nOpponent: {opponentScore}";
-
-        if (endGameText != null)
+        int localScore, opponentScore;
+        if (scoreManager != null && scoreManager.Object != null && scoreManager.Object.Id.IsValid && scoreManager.Object.Runner != null)
         {
-            endGameText.text = message;
-            GameOver.SetActive(true);
+            localScore = LocalPlayerId == "Player1" ? scoreManager.Player1Score : scoreManager.Player2Score;
+            opponentScore = LocalPlayerId == "Player1" ? scoreManager.Player2Score : scoreManager.Player1Score;
+            UpdateLocalScores(scoreManager.Player1Score, scoreManager.Player2Score);
         }
         else
         {
-            Debug.LogError("endGameText is not assigned in GameplayManager!");
+            localScore = LocalPlayerId == "Player1" ? localPlayer1Score : localPlayer2Score;
+            opponentScore = LocalPlayerId == "Player1" ? localPlayer2Score : localPlayer1Score;
+            Debug.LogWarning($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] Using cached scores for EndGame: Local={localScore}, Opponent={opponentScore}");
+        }
+
+        string message = $"{winnerText}\nYou: {localScore}\nOpponent: {opponentScore}";
+
+        if (endGameText == null || GameOver == null)
+        {
+            Debug.LogError($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] UI components missing: endGameText={(endGameText == null ? "null" : "assigned")}, GameOver={(GameOver == null ? "null" : "assigned")}");
+        }
+        else
+        {
+            // Ensure GameOver canvas is properly configured
+            Canvas canvas = GameOver.GetComponent<Canvas>();
+            if (canvas != null)
+            {
+                // Assign Player2's camera if LocalPlayerId is Player2
+                Camera playerCamera = LocalPlayerId == "Player2" ?
+                    player2Helix?.transform.parent?.Find("Camera")?.GetComponent<Camera>() :
+                    player1Helix?.transform.parent?.Find("Camera")?.GetComponent<Camera>();
+
+                if (playerCamera != null)
+                {
+                    canvas.worldCamera = playerCamera;
+                    canvas.renderMode = RenderMode.ScreenSpaceCamera;
+                    canvas.planeDistance = 1f;
+                    Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] Assigned {LocalPlayerId}'s camera to GameOver canvas: {playerCamera.name}");
+                }
+                else
+                {
+                    Debug.LogError($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] Could not find camera for {LocalPlayerId}");
+                }
+            }
+
+            endGameText.text = message;
+            GameOver.SetActive(true);
+            Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] GameOver set to active, text: {message}, Canvas active: {GameOver.activeSelf}");
         }
 
         // Post match result with local player's score
@@ -587,16 +731,15 @@ public class GameplayManager : Singleton<GameplayManager>
             ? (winner == "Player1" ? "won" : "lost")
             : (winner == "Player1" && LocalPlayerId == "Player1") ||
               (winner == "Player2" && LocalPlayerId == "Player2") ? "won" : "lost";
-        int score = localScore;
-       
-        StartCoroutine(EndMultiplayerGameCoroutine());
-        IFrameBridge.Instance.PostMatchResult(outcome, score);
+
+        StartCoroutine(EndMultiplayerGameCoroutine(outcome, localScore));
     }
 
-    private IEnumerator EndMultiplayerGameCoroutine()
+    private IEnumerator EndMultiplayerGameCoroutine(string outcome, int score)
     {
         // Wait for 5 seconds to display the win sprite
         yield return new WaitForSeconds(5f);
+        IFrameBridge.Instance.PostMatchResult(outcome, score);
 
         // Find the local player
         HelixTowerRotation localPlayer = FindObjectsOfType<HelixTowerRotation>().FirstOrDefault(p => p.Object.HasInputAuthority);
@@ -607,11 +750,9 @@ public class GameplayManager : Singleton<GameplayManager>
             Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] Player despawned.");
         }
 
-
         // Shutdown the network runner and load the main menu scene after completion
-        Connector.Instance.NetworkRunner.Shutdown();
         yield return new WaitForSeconds(2f);
-        
-        
+        Connector.Instance.NetworkRunner.Shutdown();
+
     }
 }

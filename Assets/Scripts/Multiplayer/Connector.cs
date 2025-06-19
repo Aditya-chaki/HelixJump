@@ -161,15 +161,40 @@ public class Connector : Singleton<Connector>, INetworkRunnerCallbacks
 
     public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
     {
-        Debug.Log($"[Connector] Player left: {player}");
-        if (GameplayManager.Instance != null && !string.IsNullOrEmpty(GameplayManager.Instance.LocalPlayerId))
+        Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [Connector] Player left: {player}, LocalPlayer: {runner.LocalPlayer}, ActivePlayers: {runner.ActivePlayers.Count()}");
+
+        if (GameplayManager.Instance != null && GameplayManager.Instance.IsGameStarted)
         {
-            GameplayManager.Instance.EndGame(GameplayManager.Instance.LocalPlayerId);
+            var remainingPlayers = runner.ActivePlayers.ToList();
+            if (remainingPlayers.Count == 1)
+            {
+                PlayerRef remainingPlayer = remainingPlayers[0];
+                HelixTowerRotation[] helixes = UnityEngine.Object.FindObjectsOfType<HelixTowerRotation>();
+                HelixTowerRotation remainingHelix = helixes.FirstOrDefault(h =>
+                    h.Object != null && h.Object.InputAuthority == remainingPlayer);
+
+                if (remainingHelix != null)
+                {
+                    string winnerId = remainingHelix.PlayerId;
+                    Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [Connector] Declaring {winnerId} as the winner.");
+                    GameplayManager.Instance.EndGame(winnerId);
+                }
+                else
+                {
+                    Debug.LogError($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [Connector] Could not find remaining player's HelixTowerRotation");
+                    IFrameBridge.Instance.PostMatchAbort("Error determining winner", "Helix not found", "1020");
+                }
+            }
+            else
+            {
+                Debug.LogError($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [Connector] Unexpected number of remaining players: {remainingPlayers.Count}");
+                IFrameBridge.Instance.PostMatchAbort("Unexpected player count", "", "");
+            }
         }
         else
         {
-            Debug.LogError("[Connector] GameplayManager instance or LocalPlayerId not set!");
-            IFrameBridge.Instance.PostMatchAbort("Game setup failed", "LocalPlayerId not set", "1018");
+            Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [Connector] Player left before game start or GameplayManager not initialized");
+            IFrameBridge.Instance.PostMatchAbort("Player left before game start", "", "");
         }
     }
 

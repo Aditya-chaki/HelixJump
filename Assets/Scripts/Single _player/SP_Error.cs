@@ -7,7 +7,7 @@ public class SP_Error : MonoBehaviour
 
     private void Start()
     {
-        scoreManager = FindObjectOfType<SP_ScoreManager>();
+        scoreManager = FindAnyObjectByType<SP_ScoreManager>();
         if (scoreManager == null)
         {
             Debug.LogError($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [Error] SP_ScoreManager not found in scene!");

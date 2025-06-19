@@ -5,8 +5,9 @@ public class SP_BallMovement : MonoBehaviour
     [SerializeField] private Rigidbody _rigidbody;
     [SerializeField] private float _jumpForce;
     [SerializeField] private GameObject _cylinder1, _cylinder2;
-
     [SerializeField] private AudioSource _audioSource;
+    [SerializeField] private GameObject _speedEffectObject; // GameObject to activate/deactivate based on speed
+    [SerializeField] private float _speedThreshold = 10f; // Speed threshold for toggling the GameObject
 
     private float _cylinderPositionY = -24f;
     private bool _isCollidingWithRingPiece = false; // Tracks collision with ring pieces
@@ -28,8 +29,29 @@ public class SP_BallMovement : MonoBehaviour
         {
             Debug.LogError($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [SP_BallMovement] Cylinder1 or Cylinder2 not found!");
         }
+
+        // Ensure the speed effect object is initially deactivated
+        if (_speedEffectObject != null)
+        {
+            _speedEffectObject.SetActive(false);
+        }
     }
-    
+
+    void Update()
+    {
+        // Check the ball's speed and toggle the speed effect GameObject
+        if (_rigidbody != null && _speedEffectObject != null)
+        {
+            float speed = _rigidbody.linearVelocity.magnitude;
+            bool shouldBeActive = speed > _speedThreshold;
+
+            if (_speedEffectObject.activeSelf != shouldBeActive)
+            {
+                _speedEffectObject.SetActive(shouldBeActive);
+                Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [SP_BallMovement] SpeedEffectObject {(shouldBeActive ? "activated" : "deactivated")} at speed {speed:F2}");
+            }
+        }
+    }
 
     private void OnCollisionEnter(Collision collision)
     {
@@ -64,7 +86,6 @@ public class SP_BallMovement : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        
         if (other.name == "Cylinder1" && _cylinder2 != null)
         {
             Vector3 currentPos = _cylinder2.transform.position;

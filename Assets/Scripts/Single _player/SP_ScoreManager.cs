@@ -16,6 +16,10 @@ public class SP_ScoreManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI winnerText;
     public GameObject WinnerCard;
 
+    // Progress Bar Sliders
+    [SerializeField] private Slider player1Slider;
+    [SerializeField] private Slider player2Slider;
+
     // Public properties to access scores
     public int Player1Score => player1Score;
     public int Player2Score => player2Score;
@@ -32,10 +36,16 @@ public class SP_ScoreManager : MonoBehaviour
         }
 
         // Validate UI elements
-        if (player1ScoreText == null || player2ScoreText == null || winnerText == null)
+        if (player1ScoreText == null || player2ScoreText == null || winnerText == null || player1Slider == null || player2Slider == null)
         {
-            Debug.LogError($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [SP_ScoreManager] One or more UI Text elements are not assigned!");
+            Debug.LogError($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [SP_ScoreManager] One or more UI elements are not assigned!");
         }
+
+        // Initialize Sliders
+        player1Slider.minValue = 0;
+        player1Slider.maxValue = SCORE_TO_WIN;
+        player2Slider.minValue = 0;
+        player2Slider.maxValue = SCORE_TO_WIN;
 
         // Initialize UI
         UpdateScoreUI();
@@ -47,7 +57,6 @@ public class SP_ScoreManager : MonoBehaviour
     {
         if (gameEnded) return;
 
-        
         player1Score++;
         player1Score++;
         UpdateScoreUI();
@@ -94,6 +103,14 @@ public class SP_ScoreManager : MonoBehaviour
         {
             player2ScoreText.text = $"{player2Score}";
         }
+        if (player1Slider != null)
+        {
+            player1Slider.value = player1Score;
+        }
+        if (player2Slider != null)
+        {
+            player2Slider.value = player2Score;
+        }
     }
 
     private void CheckForWinner()
@@ -107,7 +124,6 @@ public class SP_ScoreManager : MonoBehaviour
             winnerText.text = "You Wins!";
             Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [SP_ScoreManager] Player 1 Wins with score: {player1Score}");
             StartCoroutine(PostMatchResultWithDelay("won", player1Score));
-
         }
         else if (player2Score >= SCORE_TO_WIN)
         {
@@ -116,13 +132,12 @@ public class SP_ScoreManager : MonoBehaviour
             winnerText.text = "Opponent Wins!";
             Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [SP_ScoreManager] Player 2 Wins with score: {player2Score}");
             StartCoroutine(PostMatchResultWithDelay("lost", player1Score));
-
         }
     }
+
     private IEnumerator PostMatchResultWithDelay(string result, int score)
     {
         yield return new WaitForSeconds(5f);
         IFrameBridge.Instance.PostMatchResult(result, score);
     }
-
 }

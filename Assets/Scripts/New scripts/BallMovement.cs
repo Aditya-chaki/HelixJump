@@ -7,12 +7,11 @@ public class BallMovement : NetworkBehaviour
 {
     [SerializeField] private Rigidbody _rigidbody;
     [SerializeField] private float _jumpForce;
-
     [SerializeField] private GameObject _cylinder1, _cylinder2;
+    [SerializeField] private GameObject _speedEffectObject; // GameObject to activate/deactivate
+    [SerializeField] private float _speedThreshold = 10f; // Speed threshold for activation
 
     [Networked] private float _cylinderPositionY { get; set; } = -24f;
-
-
     [SerializeField] private AudioSource _audioSource;
 
     private bool shouldJump = false;
@@ -39,8 +38,11 @@ public class BallMovement : NetworkBehaviour
         {
             Debug.LogError("[BallMovement] AudioSource not found!");
         }
+        if (_speedEffectObject == null)
+        {
+            Debug.LogWarning("[BallMovement] SpeedEffectObject not assigned!");
+        }
     }
-
 
     private void OnCollisionEnter(Collision collision)
     {
@@ -56,6 +58,7 @@ public class BallMovement : NetworkBehaviour
             }
         }
     }
+
     public override void FixedUpdateNetwork()
     {
         if (shouldJump)
@@ -63,6 +66,18 @@ public class BallMovement : NetworkBehaviour
             _rigidbody.AddForce(Vector3.up * _jumpForce, ForceMode.Impulse);
             shouldJump = false;
             Debug.Log($"[BallMovement] Applying jump force in FixedUpdateNetwork");
+        }
+
+        // Check ball speed and toggle speed effect GameObject
+        if (_speedEffectObject != null && Object.HasStateAuthority)
+        {
+            float currentSpeed = _rigidbody.linearVelocity.magnitude;
+            bool shouldBeActive = currentSpeed > _speedThreshold;
+            if (_speedEffectObject.activeSelf != shouldBeActive)
+            {
+                _speedEffectObject.SetActive(shouldBeActive);
+                Debug.Log($"[BallMovement] SpeedEffectObject {(shouldBeActive ? "activated" : "deactivated")} at speed {currentSpeed}");
+            }
         }
     }
 
@@ -90,9 +105,6 @@ public class BallMovement : NetworkBehaviour
                 Debug.Log("Cylinder2 pos changed");
             }
         }
-
-        // Ring triggers combined for simplicity
-
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
