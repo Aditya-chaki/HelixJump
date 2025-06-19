@@ -16,7 +16,7 @@ public class SP_AIRotation : MonoBehaviour
     private SP_BallMovement ballMovement; // Reference to ball movement script
     private bool isRotatingToTarget = false; // Tracks if AI is rotating to a target angle
     private float targetRotationAngle; // Target angle for the current rotation
-    private const float rotationIncrement = 60f; // Fixed rotation step
+    private const float rotationIncrement = 120f; // Fixed rotation step
     private float rotationSmoothingFactor = 0.15f; // Controls smoothness of rotation (lower = smoother)
 
     void Start()

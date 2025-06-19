@@ -30,6 +30,7 @@ public class GameplayManager : Singleton<GameplayManager>
     private HelixTowerRotation player1Helix;
     private HelixTowerRotation player2Helix;
     private AudioListener audioListener; // Reference to the AudioListener component
+    public bool IsGameStarted => isGameStarted;
 
     public override void Awake()
     {
@@ -587,8 +588,9 @@ public class GameplayManager : Singleton<GameplayManager>
             : (winner == "Player1" && LocalPlayerId == "Player1") ||
               (winner == "Player2" && LocalPlayerId == "Player2") ? "won" : "lost";
         int score = localScore;
-        IFrameBridge.Instance.PostMatchResult(outcome, score);
+       
         StartCoroutine(EndMultiplayerGameCoroutine());
+        IFrameBridge.Instance.PostMatchResult(outcome, score);
     }
 
     private IEnumerator EndMultiplayerGameCoroutine()
@@ -605,7 +607,11 @@ public class GameplayManager : Singleton<GameplayManager>
             Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] Player despawned.");
         }
 
+
         // Shutdown the network runner and load the main menu scene after completion
         Connector.Instance.NetworkRunner.Shutdown();
+        yield return new WaitForSeconds(2f);
+        
+        
     }
 }

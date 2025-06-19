@@ -23,62 +23,62 @@ public class SP_GameManager : MonoBehaviour
             return;
         }
 
-        StartCoroutine(SetInitialPositionsAfterDelay());
+        // StartCoroutine(SetInitialPositionsAfterDelay());
     }
 
-    private IEnumerator SetInitialPositionsAfterDelay()
-    {
-        Debug.Log("First rings instantiated");
-        yield return new WaitForSeconds(0.5f);
+    // private IEnumerator SetInitialPositionsAfterDelay()
+    // {
+    //     Debug.Log("First rings instantiated");
+    //     yield return new WaitForSeconds(0.5f);
 
-        if (Rings.Exists(r => r == null))
-        {
-            Debug.LogError("[SP_GameManager] One or more rings are not assigned!");
-            yield break;
-        }
+    //     if (Rings.Exists(r => r == null))
+    //     {
+    //         Debug.LogError("[SP_GameManager] One or more rings are not assigned!");
+    //         yield break;
+    //     }
 
-        float cylinderX = ReferenceCylinder.position.x;
-        float cylinderZ = ReferenceCylinder.position.z;
+    //     float cylinderX = ReferenceCylinder.position.x;
+    //     float cylinderZ = ReferenceCylinder.position.z;
 
-        // Evenly space rings starting from TOP_Y_POSITION
-        Vector3 pos1 = new Vector3(cylinderX, TOP_Y_POSITION, cylinderZ);
-        Vector3 pos2 = new Vector3(cylinderX, TOP_Y_POSITION - RING_SPACING, cylinderZ);
-        Vector3 pos3 = new Vector3(cylinderX, TOP_Y_POSITION - 2 * RING_SPACING, cylinderZ);
-        Vector3 pos4 = new Vector3(cylinderX, TOP_Y_POSITION - 3 * RING_SPACING, cylinderZ);
-        Vector3 pos5 = new Vector3(cylinderX, TOP_Y_POSITION - 4 * RING_SPACING, cylinderZ);
+    //     // Evenly space rings starting from TOP_Y_POSITION
+    //     Vector3 pos1 = new Vector3(cylinderX, TOP_Y_POSITION, cylinderZ);
+    //     Vector3 pos2 = new Vector3(cylinderX, TOP_Y_POSITION - RING_SPACING, cylinderZ);
+    //     Vector3 pos3 = new Vector3(cylinderX, TOP_Y_POSITION - 2 * RING_SPACING, cylinderZ);
+    //     Vector3 pos4 = new Vector3(cylinderX, TOP_Y_POSITION - 3 * RING_SPACING, cylinderZ);
+    //     Vector3 pos5 = new Vector3(cylinderX, TOP_Y_POSITION - 4 * RING_SPACING, cylinderZ);
 
-        SetInitialRingPositions(pos1, pos2, pos3, pos4, pos5);
+    //     SetInitialRingPositions(pos1, pos2, pos3, pos4, pos5);
 
-        _newPosition = TOP_Y_POSITION - 5 * RING_SPACING; // Set _newPosition to below the lowest ring
-    }
+    //     _newPosition = TOP_Y_POSITION - 5 * RING_SPACING; // Set _newPosition to below the lowest ring
+    // }
 
-    public void SetInitialRingPositions(Vector3 pos1, Vector3 pos2, Vector3 pos3, Vector3 pos4, Vector3 pos5)
-    {
-        if (Ring1 != null)
-            Ring1.transform.position = pos1;
-        else
-            Debug.LogError("[SP_GameManager] Ring1 is not assigned!");
+    // public void SetInitialRingPositions(Vector3 pos1, Vector3 pos2, Vector3 pos3, Vector3 pos4, Vector3 pos5)
+    // {
+    //     if (Ring1 != null)
+    //         Ring1.transform.position = pos1;
+    //     else
+    //         Debug.LogError("[SP_GameManager] Ring1 is not assigned!");
         
-        if (Ring2 != null)
-            Ring2.transform.position = pos2;
-        else
-            Debug.LogError("[SP_GameManager] Ring2 is not assigned!");
+    //     if (Ring2 != null)
+    //         Ring2.transform.position = pos2;
+    //     else
+    //         Debug.LogError("[SP_GameManager] Ring2 is not assigned!");
         
-        if (Ring3 != null)
-            Ring3.transform.position = pos3;
-        else
-            Debug.LogError("[SP_GameManager] Ring3 is not assigned!");
+    //     if (Ring3 != null)
+    //         Ring3.transform.position = pos3;
+    //     else
+    //         Debug.LogError("[SP_GameManager] Ring3 is not assigned!");
         
-        if (Ring4 != null)
-            Ring4.transform.position = pos4;
-        else
-            Debug.LogError("[SP_GameManager] Ring4 is not assigned!");
+    //     if (Ring4 != null)
+    //         Ring4.transform.position = pos4;
+    //     else
+    //         Debug.LogError("[SP_GameManager] Ring4 is not assigned!");
         
-        if (Ring5 != null)
-            Ring5.transform.position = pos5;
-        else
-            Debug.LogError("[SP_GameManager] Ring5 is not assigned!");
-    }
+    //     if (Ring5 != null)
+    //         Ring5.transform.position = pos5;
+    //     else
+    //         Debug.LogError("[SP_GameManager] Ring5 is not assigned!");
+    // }
 
     void Update()
     {

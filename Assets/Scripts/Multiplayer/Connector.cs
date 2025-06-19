@@ -161,8 +161,16 @@ public class Connector : Singleton<Connector>, INetworkRunnerCallbacks
 
     public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
     {
-        Debug.Log($"Photon Callback - Player left: {player}");
-        IFrameBridge.Instance.PostMatchAbort("Player left the game", "", "");
+        Debug.Log($"[Connector] Player left: {player}");
+        if (GameplayManager.Instance != null && !string.IsNullOrEmpty(GameplayManager.Instance.LocalPlayerId))
+        {
+            GameplayManager.Instance.EndGame(GameplayManager.Instance.LocalPlayerId);
+        }
+        else
+        {
+            Debug.LogError("[Connector] GameplayManager instance or LocalPlayerId not set!");
+            IFrameBridge.Instance.PostMatchAbort("Game setup failed", "LocalPlayerId not set", "1018");
+        }
     }
 
     public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress)

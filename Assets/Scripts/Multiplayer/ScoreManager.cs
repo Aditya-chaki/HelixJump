@@ -10,15 +10,15 @@ public class ScoreManager : NetworkBehaviour
 
     void FixedUpdate()
     {
-        if (!isGameEnded) // Only update score UI if the game is not ended
+        if (GameplayManager.Instance.IsGameStarted && !isGameEnded) // Only update score UI if game started and not ended
         {
             GameplayManager.Instance.UpdateScoreUI();
         }
-
     }
 
     public void IncrementPlayer1Score()
     {
+        if (!GameplayManager.Instance.IsGameStarted) return;
         if (isGameEnded) return;
         if (Object != null && Object.HasStateAuthority)
         {
@@ -54,6 +54,7 @@ public class ScoreManager : NetworkBehaviour
 
     public void IncrementPlayer2Score()
     {
+        if (!GameplayManager.Instance.IsGameStarted) return;
         if (isGameEnded) return;
         if (Object != null && Object.HasStateAuthority)
         {
@@ -95,6 +96,7 @@ public class ScoreManager : NetworkBehaviour
 
     public void DecrementPlayer1Score()
     {
+        if (!GameplayManager.Instance.IsGameStarted) return;
         if (isGameEnded || Player1Score <= 0) return;
         if (Object.HasStateAuthority)
         {
@@ -115,6 +117,7 @@ public class ScoreManager : NetworkBehaviour
 
     public void DecrementPlayer2Score()
     {
+        if (!GameplayManager.Instance.IsGameStarted) return;
         if (isGameEnded || Player2Score <= 0) return;
         if (Object.HasStateAuthority)
         {

@@ -3,7 +3,7 @@ using UnityEngine;
 public class SP_ScoreTrigger : MonoBehaviour
 {
     private SP_ScoreManager scoreManager;
-      [SerializeField] private DynamicTextData data;
+       
 
 
     private void Start()
@@ -17,7 +17,8 @@ public class SP_ScoreTrigger : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-          Vector3 pos = new Vector3(other.transform.position.x + Random.Range(-0.5f, 0.5f), other.transform.position.y - 1f, other.transform.position.z);
+        
+
         if (scoreManager == null)
         {
             Debug.LogError($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [ScoreTrigger] SP_ScoreManager not assigned!");
@@ -30,13 +31,13 @@ public class SP_ScoreTrigger : MonoBehaviour
             if (other.CompareTag("Player1"))
             {
                 scoreManager.IncrementPlayer1Score();
-                DynamicTextManager.CreateText(pos, "+2", data);
+                
                 Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [ScoreTrigger] Player1 score incremented.");
             }
             else if (other.CompareTag("Player2"))
             {
                 scoreManager.IncrementPlayer2Score();
-                DynamicTextManager.CreateText(pos, "+2", data);
+                
                 Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [ScoreTrigger] Player2 score incremented.");
             }
         }
