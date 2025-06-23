@@ -47,7 +47,7 @@ public class GameplayManager : Singleton<GameplayManager>
     {
         localPlayer1Score = player1Score;
         localPlayer2Score = player2Score;
-        Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] Updated local scores: P1={localPlayer1Score}, P2={localPlayer2Score}");
+        
     }
 
     public override void Awake()
@@ -97,7 +97,7 @@ public class GameplayManager : Singleton<GameplayManager>
 
         yield return new WaitUntil(() => runner != null && runner.IsRunning);
 
-        if (FindObjectsOfType<HelixTowerRotation>().Any(p => p.Object != null && p.Object.InputAuthority == runner.LocalPlayer))
+        if (FindObjectsByType<HelixTowerRotation>(FindObjectsSortMode.None).Any(p => p.Object != null && p.Object.InputAuthority == runner.LocalPlayer))
         {
             Debug.LogWarning($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] Player already spawned for this client!");
             yield break;
@@ -320,7 +320,7 @@ public class GameplayManager : Singleton<GameplayManager>
         {
             if (scoreManager == null)
             {
-                scoreManager = FindObjectOfType<ScoreManager>();
+                scoreManager = FindFirstObjectByType<ScoreManager>();
                 if (scoreManager == null)
                 {
                     Debug.LogError($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] ScoreManager not found in single-player mode!");
@@ -330,13 +330,13 @@ public class GameplayManager : Singleton<GameplayManager>
                 if (gameAudioSource != null) gameAudioSource.Play();
             }
 
-            foreach (var helix in FindObjectsOfType<HelixTowerRotation>())
+            foreach (var helix in FindObjectsByType<HelixTowerRotation>(FindObjectsSortMode.None))
             {
                 Destroy(helix.gameObject);
             }
 
             SpawnLocalPlayers();
-            HelixTowerRotation[] helixes = FindObjectsOfType<HelixTowerRotation>();
+           HelixTowerRotation[] helixes = FindObjectsByType<HelixTowerRotation>(FindObjectsSortMode.None);
             if (helixes.Length < 2)
             {
                 Debug.LogError($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] Only {helixes.Length} helixes found!");
@@ -467,7 +467,7 @@ public class GameplayManager : Singleton<GameplayManager>
 
         if (scoreManager == null)
         {
-            scoreManager = FindObjectOfType<ScoreManager>();
+            scoreManager = FindFirstObjectByType<ScoreManager>();
             if (scoreManager == null)
             {
                 Debug.LogError($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] ScoreManager not found in multiplayer mode!");
@@ -476,7 +476,7 @@ public class GameplayManager : Singleton<GameplayManager>
             }
         }
 
-        HelixTowerRotation[] helixes = FindObjectsOfType<HelixTowerRotation>();
+        HelixTowerRotation[] helixes =FindObjectsByType<HelixTowerRotation>(FindObjectsSortMode.None);
         Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] Found {helixes.Length} helixes");
         foreach (var h in helixes)
         {
@@ -559,7 +559,7 @@ public class GameplayManager : Singleton<GameplayManager>
         float elapsed = 0f;
         while (elapsed < timeout)
         {
-            HelixTowerRotation[] helixes = FindObjectsOfType<HelixTowerRotation>();
+            HelixTowerRotation[] helixes = FindObjectsByType<HelixTowerRotation>(FindObjectsSortMode.None);
             var player1 = helixes.FirstOrDefault(p => p.PlayerId == "Player1");
             var player2 = helixes.FirstOrDefault(p => p.PlayerId == "Player2");
 
@@ -606,7 +606,6 @@ public class GameplayManager : Singleton<GameplayManager>
     {
         if (isGameEnded)
         {
-            Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] Skipping UpdateScoreUI: Game has ended");
             return;
         }
 
@@ -621,24 +620,24 @@ public class GameplayManager : Singleton<GameplayManager>
         {
             p1Score = localPlayer1Score;
             p2Score = localPlayer2Score;
-            Debug.LogWarning($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] Using cached scores: P1={p1Score}, P2={p2Score}");
+           
         }
 
         if (scoreText != null)
         {
             scoreText.text = $"{p1Score}  :  {p2Score}";
-            Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] Updated score UI: P1={p1Score}, P2={p2Score}");
+            
         }
         else
         {
-            Debug.LogError($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] scoreText is not assigned!");
+           
         }
 
         if (player1Slider != null && player2Slider != null)
         {
             player1Slider.value = p1Score;
             player2Slider.value = p2Score;
-            Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] Updated sliders: P1 Score={p1Score}, P2 Score={p2Score}");
+            
         }
     }
 
@@ -731,18 +730,19 @@ public class GameplayManager : Singleton<GameplayManager>
             ? (winner == "Player1" ? "won" : "lost")
             : (winner == "Player1" && LocalPlayerId == "Player1") ||
               (winner == "Player2" && LocalPlayerId == "Player2") ? "won" : "lost";
+              
 
-        StartCoroutine(EndMultiplayerGameCoroutine(outcome, localScore));
+        StartCoroutine(EndMultiplayerGameCoroutine(outcome, localScore, opponentScore));
     }
 
-    private IEnumerator EndMultiplayerGameCoroutine(string outcome, int score)
+    private IEnumerator EndMultiplayerGameCoroutine(string outcome, int score, int score2)
     {
         // Wait for 5 seconds to display the win sprite
         yield return new WaitForSeconds(5f);
-        IFrameBridge.Instance.PostMatchResult(outcome, score);
+        IFrameBridge.Instance.PostMatchResult(outcome, score, score2);
 
         // Find the local player
-        HelixTowerRotation localPlayer = FindObjectsOfType<HelixTowerRotation>().FirstOrDefault(p => p.Object.HasInputAuthority);
+        HelixTowerRotation localPlayer = FindObjectsByType<HelixTowerRotation>(FindObjectsSortMode.None).FirstOrDefault(p => p.Object.HasInputAuthority);
         if (localPlayer != null)
         {
             // Explicitly despawn the local player's network object
@@ -751,7 +751,6 @@ public class GameplayManager : Singleton<GameplayManager>
         }
 
         // Shutdown the network runner and load the main menu scene after completion
-        yield return new WaitForSeconds(2f);
         Connector.Instance.NetworkRunner.Shutdown();
 
     }

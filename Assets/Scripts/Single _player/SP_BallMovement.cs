@@ -1,17 +1,16 @@
 using UnityEngine;
+using System.Collections; // Required for IEnumerator and coroutines
 
 public class SP_BallMovement : MonoBehaviour
 {
     [SerializeField] private Rigidbody _rigidbody;
     [SerializeField] private float _jumpForce;
     [SerializeField] private GameObject _cylinder1, _cylinder2;
+    [SerializeField] private GameObject _speedEffectObject; // GameObject to activate/deactivate
+    [SerializeField] private float _speedThreshold = 10f; // Speed threshold for activation
     [SerializeField] private AudioSource _audioSource;
-    [SerializeField] private GameObject _speedEffectObject; // GameObject to activate/deactivate based on speed
-    [SerializeField] private float _speedThreshold = 10f; // Speed threshold for toggling the GameObject
 
     private float _cylinderPositionY = -24f;
-    private bool _isCollidingWithRingPiece = false; // Tracks collision with ring pieces
-    public bool IsCollidingWithRingPiece => _isCollidingWithRingPiece; // Public accessor
     public bool IsAI;
 
     void Start()
@@ -29,26 +28,18 @@ public class SP_BallMovement : MonoBehaviour
         {
             Debug.LogError($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [SP_BallMovement] Cylinder1 or Cylinder2 not found!");
         }
-
-        // Ensure the speed effect object is initially deactivated
-        if (_speedEffectObject != null)
-        {
-            _speedEffectObject.SetActive(false);
-        }
     }
-
     void Update()
     {
-        // Check the ball's speed and toggle the speed effect GameObject
-        if (_rigidbody != null && _speedEffectObject != null)
+         // Check ball speed and toggle speed effect GameObject
+        if (_speedEffectObject != null)
         {
-            float speed = _rigidbody.linearVelocity.magnitude;
-            bool shouldBeActive = speed > _speedThreshold;
-
+            float currentSpeed = _rigidbody.linearVelocity.magnitude;
+            bool shouldBeActive = currentSpeed > _speedThreshold;
             if (_speedEffectObject.activeSelf != shouldBeActive)
             {
                 _speedEffectObject.SetActive(shouldBeActive);
-                Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [SP_BallMovement] SpeedEffectObject {(shouldBeActive ? "activated" : "deactivated")} at speed {speed:F2}");
+                // Debug.Log($"[BallMovement] SpeedEffectObject {(shouldBeActive ? "activated" : "deactivated")} at speed {currentSpeed}");
             }
         }
     }
@@ -63,24 +54,6 @@ public class SP_BallMovement : MonoBehaviour
             {
                 _audioSource.Play();
             }
-            Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [SP_BallMovement] Applying jump force for {transform.parent.tag}");
-
-            // Check if the ground object is a ring piece
-            if (collision.gameObject.GetComponentInParent<SP_PiecePositioning>() != null)
-            {
-                _isCollidingWithRingPiece = true;
-                Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [SP_BallMovement] Ball collided with ring piece (tagged Ground) on {collision.gameObject.name}");
-            }
-        }
-    }
-
-    private void OnCollisionExit(Collision collision)
-    {
-        // Clear collision state when exiting ring piece collision
-        if (collision.gameObject.CompareTag("Ground") && collision.gameObject.GetComponentInParent<SP_PiecePositioning>() != null)
-        {
-            _isCollidingWithRingPiece = false;
-            Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [SP_BallMovement] Ball stopped colliding with ring piece (tagged Ground) on {collision.gameObject.name}");
         }
     }
 
@@ -94,6 +67,14 @@ public class SP_BallMovement : MonoBehaviour
             SetCylinder2Position(newPos);
             _cylinderPositionY -= 24f;
             Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [SP_BallMovement] Cylinder1 pos changed");
+
+            // Disable Cylinder1's collider for 2 seconds
+            Collider cylinderCollider = other.GetComponent<Collider>();
+            if (cylinderCollider != null)
+            {
+                cylinderCollider.enabled = false;
+                StartCoroutine(ReEnableCollider(cylinderCollider, 2f));
+            }
         }
         else if (other.name == "Cylinder2" && _cylinder1 != null)
         {
@@ -103,7 +84,21 @@ public class SP_BallMovement : MonoBehaviour
             SetCylinder1Position(newPos);
             _cylinderPositionY -= 24f;
             Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [SP_BallMovement] Cylinder2 pos changed");
+
+            // Disable Cylinder2's collider for 2 seconds
+            Collider cylinderCollider = other.GetComponent<Collider>();
+            if (cylinderCollider != null)
+            {
+                cylinderCollider.enabled = false;
+                StartCoroutine(ReEnableCollider(cylinderCollider, 2f));
+            }
         }
+    }
+
+    private IEnumerator ReEnableCollider(Collider collider, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        collider.enabled = true;
     }
 
     public void SetCylinder1Position(Vector3 position)

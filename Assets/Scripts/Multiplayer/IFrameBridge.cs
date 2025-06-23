@@ -11,13 +11,15 @@ public class IFrameBridge : Singleton<IFrameBridge>
     public static string PlayerId { get; private set; }
     public static string OpponentId { get; private set; }
 #if UNITY_WEBGL && !UNITY_EDITOR
-    [DllImport("__Internal")] private static extern void SendMatchResult(string outcome, int score);
+    [DllImport("__Internal")] private static extern void SendMatchResult(string MatchId ,string PlayerId ,string OpponentId ,string outcome, int score, int score2);
     [DllImport("__Internal")] private static extern void SendMatchAbort(string message, string error, string errorCode);
+    [DllImport("__Internal")] private static extern int GetDeviceType();
     [DllImport("__Internal")] private static extern void SendScreenshot(string base64);
 #endif
 
     void Start()
     {
+        // SceneManager.LoadScene("AI");
         // Parse URL parameters
         string url = Application.absoluteURL;
         if (string.IsNullOrEmpty(url))
@@ -25,7 +27,7 @@ public class IFrameBridge : Singleton<IFrameBridge>
             Debug.LogWarning("[IFrameBridge] Running in Editor, generating random parameters.");
             MatchId = "Room01";
             PlayerId = $"player_{UnityEngine.Random.Range(1000, 9999)}";
-            OpponentId =$"player_{UnityEngine.Random.Range(1000, 9999)}" ; // Default to a9 for testing AI scene in Editor
+            OpponentId = $"player_{UnityEngine.Random.Range(1000, 9999)}"; // Default to a9 for testing AI scene in Editor
             // Ensure unique OpponentId
             while (OpponentId == PlayerId)
             {
@@ -66,7 +68,7 @@ public class IFrameBridge : Singleton<IFrameBridge>
         string botType = PlayerUtils.GetBotType(OpponentId);
         if (botType != null)
         {
-            string sceneToLoad = botType == "a9" ? "AI" : "HardAI"; 
+            string sceneToLoad = botType == "a9" ? "AI" : "HardAI";
             Debug.Log($"[IFrameBridge] Bot detected (type: {botType}), loading scene: {sceneToLoad}");
             try
             {
@@ -84,15 +86,15 @@ public class IFrameBridge : Singleton<IFrameBridge>
             Connector.Instance.ConnectToServer(MatchId);
         }
 
-        StartCoroutine(CaptureAndSendScreenshotRoutine());
+      
     }
 
-    public void PostMatchResult(string outcome, int score = 0)
+    public void PostMatchResult(string outcome, int score = 0, int score2 = 0)
     {
-        Debug.Log($"[IFrameBridge] Sending match_result: outcome={outcome}, score={score}");
+        Debug.Log($"[IFrameBridge] Sending match_result: outcome={outcome}, score={score}, opponentScore={score2}");
 
 #if UNITY_WEBGL && !UNITY_EDITOR
-        SendMatchResult(outcome, score);
+        SendMatchResult(MatchId , PlayerId , OpponentId ,outcome, score, score2);
 #else
         Debug.Log($"[IFrameBridge] [Editor] match_result: {{ matchId: {MatchId}, playerId: {PlayerId}, opponentId: {OpponentId}, outcome: {outcome}, score: {score} }}");
 #endif
@@ -109,28 +111,14 @@ public class IFrameBridge : Singleton<IFrameBridge>
 #endif
     }
 
-    private IEnumerator CaptureAndSendScreenshotRoutine()
+    
+    internal bool IsMobile()
     {
-        while (true)
-        {
-            yield return new WaitForSeconds(5f);
-            yield return StartCoroutine(CaptureAndSendScreenshot());
-        }
-    }
-
-    private IEnumerator CaptureAndSendScreenshot()
-    {
-        yield return new WaitForEndOfFrame();
-        Texture2D tex = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
-        tex.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0);
-        tex.Apply();
-        byte[] pngData = tex.EncodeToPNG();
-        string base64 = Convert.ToBase64String(pngData);
-
 #if UNITY_WEBGL && !UNITY_EDITOR
-        SendScreenshot(base64);
+        return GetDeviceType() == 1;
+#else
+        return false;
 #endif
-        Destroy(tex);
     }
 
     public static class PlayerUtils

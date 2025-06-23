@@ -37,7 +37,7 @@ public class SP_GameManager : MonoBehaviour
                     Vector3 newPos = new Vector3(ReferenceCylinder.position.x, _newPosition, ReferenceCylinder.position.z);
                     SetRingPosition(i, newPos);
                     _newPosition -= RING_SPACING; // Update to maintain even spacing
-                    Debug.Log($"[SP_GameManager] Repositioned Ring {i + 1} to {newPos}");
+                    // Debug.Log($"[SP_GameManager] Repositioned Ring {i + 1} to {newPos}");
                 }
             }
         }
@@ -55,7 +55,7 @@ public class SP_GameManager : MonoBehaviour
             float randomYRotation = Random.Range(0f, 360f);
             Rings[index].transform.rotation = Quaternion.Euler(0f, randomYRotation, 0f);
             Rings[index].transform.position = position;
-            Debug.Log($"[SP_GameManager] Ring {index + 1} rotated to Y={randomYRotation} degrees");
+            // Debug.Log($"[SP_GameManager] Ring {index + 1} rotated to Y={randomYRotation} degrees");
         }
         else
         {

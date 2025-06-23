@@ -3,6 +3,7 @@ using UnityEngine;
 public class SP_HelixTowerRotation : MonoBehaviour
 {
     public float rotationSpeed = 100f; // Rotation speed for player
+    public float swipeSensitivity = 500f; // Swipe speed in pixels per second for full rotation
     public Transform[] cylinders; // Reference to Cylinder1 and Cylinder2
     private float offsetMove = -32f;
     private float currentRotation;
@@ -26,9 +27,30 @@ public class SP_HelixTowerRotation : MonoBehaviour
 
     void Update()
     {
-        float rotationInput = Input.GetAxisRaw("Horizontal");
+        float rotationInput = 0f;
+
+        // Check for swipe input if there is a touch
+        if (Input.touchCount > 0)
+        {
+            Touch touch = Input.GetTouch(0);
+            if (touch.phase == TouchPhase.Moved)
+            {
+                float deltaX =  touch.deltaPosition.x;
+                float swipeSpeed = deltaX / Time.deltaTime; // Calculate swipe speed in pixels per second
+                rotationInput = swipeSpeed / swipeSensitivity; // Scale to match input range
+                rotationInput = Mathf.Clamp(rotationInput, -1f, 1f); // Clamp to -1 to 1, like keyboard input
+            }
+        }
+
+        // If no swipe input is detected, use keyboard input
+        if (rotationInput == 0f)
+        {
+            rotationInput = Input.GetAxisRaw("Horizontal");
+        }
+
         RotateHelix(rotationInput);
     }
+
 
     void RotateHelix(float rotationInput)
     {

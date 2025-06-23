@@ -8,7 +8,7 @@ public class SP_ScoreManager : MonoBehaviour
     private int player1Score = 0;
     private int player2Score = 0;
     private bool gameEnded = false;
-    private const int SCORE_TO_WIN = 50;
+    private const int SCORE_TO_WIN = 100;
 
     // UI Elements
     [SerializeField] private TextMeshProUGUI player1ScoreText;
@@ -27,7 +27,7 @@ public class SP_ScoreManager : MonoBehaviour
     private void Start()
     {
         // Ensure there's only one SP_ScoreManager
-        SP_ScoreManager[] scoreManagers = FindObjectsOfType<SP_ScoreManager>();
+       SP_ScoreManager[] scoreManagers = FindObjectsByType<SP_ScoreManager>(FindObjectsSortMode.None);
         if (scoreManagers.Length > 1)
         {
             Debug.LogWarning($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [SP_ScoreManager] Multiple SP_ScoreManagers found in scene! Destroying this instance.");
@@ -123,7 +123,7 @@ public class SP_ScoreManager : MonoBehaviour
             WinnerCard.SetActive(true);
             winnerText.text = "You Wins!";
             Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [SP_ScoreManager] Player 1 Wins with score: {player1Score}");
-            StartCoroutine(PostMatchResultWithDelay("won", player1Score));
+            StartCoroutine(PostMatchResultWithDelay("won", player1Score,player2Score));
         }
         else if (player2Score >= SCORE_TO_WIN)
         {
@@ -131,13 +131,14 @@ public class SP_ScoreManager : MonoBehaviour
             WinnerCard.SetActive(true);
             winnerText.text = "Opponent Wins!";
             Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [SP_ScoreManager] Player 2 Wins with score: {player2Score}");
-            StartCoroutine(PostMatchResultWithDelay("lost", player1Score));
+            StartCoroutine(PostMatchResultWithDelay("lost", player1Score, player2Score));
         }
     }
 
-    private IEnumerator PostMatchResultWithDelay(string result, int score)
+    private IEnumerator PostMatchResultWithDelay(string result, int score , int score2)
     {
+        Time.timeScale = 0;
         yield return new WaitForSeconds(5f);
-        IFrameBridge.Instance.PostMatchResult(result, score);
+        IFrameBridge.Instance.PostMatchResult(result, score, score2);
     }
 }

@@ -12,8 +12,14 @@ using Game.Utility;
 public class Connector : Singleton<Connector>, INetworkRunnerCallbacks
 {
     [SerializeField] private NetworkRunner networkRunner;
+   [SerializeField] private float swipeSensitivity = 0.1f;
+    [SerializeField] private float rotationSmoothing = 0.1f; // Controls Lerp speed (0.0f to 1.0f)
+    [SerializeField] private int touchDeltaBufferSize = 5; // Number of frames to average touch deltas
+    private List<float> touchDeltaBuffer = new List<float>(); // Buffer for averaging touch deltas
+    private float smoothedRotationInput = 0f; // Current smoothed rotation value
     // Public property to expose NetworkRunner
     public NetworkRunner NetworkRunner => networkRunner;
+   
     internal async void ConnectToServer(string sessionName)
     {
         if (networkRunner == null)
@@ -45,7 +51,7 @@ public class Connector : Singleton<Connector>, INetworkRunnerCallbacks
         }
     }
 
-    public void OnInput(NetworkRunner runner, NetworkInput input)
+   public void OnInput(NetworkRunner runner, NetworkInput input)
     {
         if (!runner.IsRunning)
         {
@@ -53,14 +59,12 @@ public class Connector : Singleton<Connector>, INetworkRunnerCallbacks
             return;
         }
 
-        // Check if GameplayManager is initialized
         if (GameplayManager.Instance == null)
         {
             Debug.LogWarning("[Connector] GameplayManager instance not initialized, skipping input processing.");
             return;
         }
 
-        // Check if LocalPlayerId is set
         if (string.IsNullOrEmpty(GameplayManager.Instance.LocalPlayerId))
         {
             Debug.LogWarning("[Connector] LocalPlayerId not set, skipping input processing.");
@@ -84,21 +88,70 @@ public class Connector : Singleton<Connector>, INetworkRunnerCallbacks
             return;
         }
 
-        // Use arrow keys for both players
         float rotationInput = 0f;
-        if (Input.GetKey(KeyCode.LeftArrow))
+
+        if (IFrameBridge.Instance.IsMobile())
         {
-            rotationInput = -1f; // Rotate left
+            // Mobile input: handle touch swipe
+            if (Input.touchCount > 0)
+            {
+                Touch touch = Input.GetTouch(0); // Use the first touch
+                if (touch.phase == TouchPhase.Moved)
+                {
+                    // Add current touch delta to buffer
+                    float touchDelta = touch.deltaPosition.x * swipeSensitivity;
+                    touchDeltaBuffer.Add(touchDelta);
+
+                    // Keep buffer size limited
+                    if (touchDeltaBuffer.Count > touchDeltaBufferSize)
+                    {
+                        touchDeltaBuffer.RemoveAt(0);
+                    }
+
+                    // Calculate average touch delta
+                    if (touchDeltaBuffer.Count > 0)
+                    {
+                        rotationInput = touchDeltaBuffer.Average();
+                    }
+                }
+                else if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
+                {
+                    // Clear buffer when touch ends to prevent residual input
+                    touchDeltaBuffer.Clear();
+                    rotationInput = 0f;
+                }
+            }
+            else
+            {
+                // No touch input, clear buffer
+                touchDeltaBuffer.Clear();
+                rotationInput = 0f;
+            }
+
+            // Smooth the rotation input using Lerp
+            smoothedRotationInput = Mathf.Lerp(smoothedRotationInput, rotationInput, rotationSmoothing);
+            inputData.rotationDeltaX = smoothedRotationInput;
         }
-        else if (Input.GetKey(KeyCode.RightArrow))
+        else
         {
-            rotationInput = 1f; // Rotate right
+            // PC input: handle arrow keys
+            if (Input.GetKey(KeyCode.LeftArrow))
+            {
+                rotationInput -= 1f; // Rotate left
+            }
+            if (Input.GetKey(KeyCode.RightArrow))
+            {
+                rotationInput += 1f; // Rotate right
+            }
+
+            // Smooth the rotation input for PC as well
+            smoothedRotationInput = Mathf.Lerp(smoothedRotationInput, rotationInput, rotationSmoothing);
+            inputData.rotationDeltaX = smoothedRotationInput;
         }
 
-        inputData.rotationDeltaX = rotationInput;
-        if (rotationInput != 0)
+        if (inputData.rotationDeltaX != 0)
         {
-            Debug.Log($"[Connector] Input collected for Player {inputData.playerId}: rotationDeltaX={inputData.rotationDeltaX}");
+            // Debug.Log($"[Connector] Input collected for Player {inputData.playerId}: rotationDeltaX={inputData.rotationDeltaX}");
         }
 
         input.Set(inputData);
@@ -169,7 +222,7 @@ public class Connector : Singleton<Connector>, INetworkRunnerCallbacks
             if (remainingPlayers.Count == 1)
             {
                 PlayerRef remainingPlayer = remainingPlayers[0];
-                HelixTowerRotation[] helixes = UnityEngine.Object.FindObjectsOfType<HelixTowerRotation>();
+                HelixTowerRotation[] helixes = UnityEngine.Object.FindObjectsByType<HelixTowerRotation>(FindObjectsSortMode.None);
                 HelixTowerRotation remainingHelix = helixes.FirstOrDefault(h =>
                     h.Object != null && h.Object.InputAuthority == remainingPlayer);
 

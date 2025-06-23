@@ -15,6 +15,11 @@ public class BallMovement : NetworkBehaviour
     [SerializeField] private AudioSource _audioSource;
 
     private bool shouldJump = false;
+    private Collider _cylinder1Collider;
+    private Collider _cylinder2Collider;
+
+    [Networked] private float Cylinder1DisableUntil { get; set; } = 0f;
+    [Networked] private float Cylinder2DisableUntil { get; set; } = 0f;
 
     void Start()
     {
@@ -29,6 +34,11 @@ public class BallMovement : NetworkBehaviour
         if (_cylinder1 == null || _cylinder2 == null)
         {
             Debug.LogError("[BallMovement] Cylinder1 or Cylinder2 not found!");
+        }
+        else
+        {
+            _cylinder1Collider = _cylinder1.GetComponent<Collider>();
+            _cylinder2Collider = _cylinder2.GetComponent<Collider>();
         }
         if (_audioSource == null)
         {
@@ -48,7 +58,7 @@ public class BallMovement : NetworkBehaviour
     {
         if (collision.gameObject.tag == "Ground")
         {
-            if (collision.gameObject.tag == "Ground" && Object.HasStateAuthority)
+            if (Object.HasStateAuthority)
             {
                 shouldJump = true;
             }
@@ -65,7 +75,6 @@ public class BallMovement : NetworkBehaviour
         {
             _rigidbody.AddForce(Vector3.up * _jumpForce, ForceMode.Impulse);
             shouldJump = false;
-            Debug.Log($"[BallMovement] Applying jump force in FixedUpdateNetwork");
         }
 
         // Check ball speed and toggle speed effect GameObject
@@ -76,18 +85,28 @@ public class BallMovement : NetworkBehaviour
             if (_speedEffectObject.activeSelf != shouldBeActive)
             {
                 _speedEffectObject.SetActive(shouldBeActive);
-                Debug.Log($"[BallMovement] SpeedEffectObject {(shouldBeActive ? "activated" : "deactivated")} at speed {currentSpeed}");
             }
+        }
+
+        // Manage cylinder colliders
+        if (_cylinder1Collider != null)
+        {
+            _cylinder1Collider.enabled = Runner.SimulationTime >= Cylinder1DisableUntil;
+        }
+        if (_cylinder2Collider != null)
+        {
+            _cylinder2Collider.enabled = Runner.SimulationTime >= Cylinder2DisableUntil;
         }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        // Only the state authority should initiate position changes
+        // Only the state authority should initiate position changes and collider disabling
         if (Object.HasStateAuthority)
         {
             if (other.name == "Cylinder1" && _cylinder2 != null)
             {
+                Cylinder1DisableUntil = Runner.SimulationTime + 2f;
                 Vector3 currentPos = _cylinder2.transform.position;
                 Vector3 newPos = new Vector3(currentPos.x, _cylinderPositionY, currentPos.z);
                 Debug.Log($"[BallMovement] Player {transform.parent.tag} - Changing Cylinder2 position to {newPos}");
@@ -97,6 +116,7 @@ public class BallMovement : NetworkBehaviour
             }
             else if (other.name == "Cylinder2" && _cylinder1 != null)
             {
+                Cylinder2DisableUntil = Runner.SimulationTime + 2f;
                 Vector3 currentPos = _cylinder1.transform.position;
                 Vector3 newPos = new Vector3(currentPos.x, _cylinderPositionY, currentPos.z);
                 Debug.Log($"[BallMovement] Player {transform.parent.tag} - Changing Cylinder1 position to {newPos}");

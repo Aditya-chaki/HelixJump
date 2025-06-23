@@ -7,7 +7,7 @@ public class ScoreTrigger : MonoBehaviour
 
     private void Start()
     {
-        scoreManager = FindObjectOfType<ScoreManager>();
+        scoreManager = FindFirstObjectByType<ScoreManager>();
         if (scoreManager == null)
         {
             Debug.LogError($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [ScoreTrigger] ScoreManager not found in scene!");

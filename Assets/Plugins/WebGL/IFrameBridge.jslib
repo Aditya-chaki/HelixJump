@@ -1,14 +1,25 @@
 mergeInto(LibraryManager.library, {
-  SendMatchResult: function(outcomePtr, score) {
+
+GetDeviceType: function() {
+    var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    return isMobile ? 1 : 0;
+  },
+
+
+  SendMatchResult: function(matchIdPtr, playerIdPtr, opponentIdPtr ,outcomePtr, score, Opponentscore) {
     var outcome = UTF8ToString(outcomePtr);
+    var matchId = UTF8ToString(matchIdPtr);
+    var playerId = UTF8ToString(playerIdPtr);
+    var opponentId = UTF8ToString(opponentIdPtr);
     parent.postMessage({
       type: 'match_result',
       payload: {
-        matchId: window.matchId || '',
-        playerId: window.playerId || '',
-        opponentId: window.opponentId || '',
+        matchId: matchId ,
+        playerId: playerId ,
+        opponentId: opponentId,
         outcome: outcome,
-        score: score
+        score: score,
+        Opponentscore: Opponentscore
       }
     }, '*');
   },
