@@ -73,7 +73,7 @@ public class BallMovement : NetworkBehaviour
     {
         if (shouldJump)
         {
-            _rigidbody.AddForce(Vector3.up * _jumpForce, ForceMode.Impulse);
+           _rigidbody.linearVelocity= Vector3.up * _jumpForce;
             shouldJump = false;
         }
 

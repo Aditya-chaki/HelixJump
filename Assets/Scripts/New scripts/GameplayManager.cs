@@ -648,7 +648,7 @@ public class GameplayManager : Singleton<GameplayManager>
             Debug.LogWarning($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] Game already ended, ignoring EndGame call for {winner}");
             return;
         }
-        isGameEnded = true;
+        
         Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] {winner} Won!");
         if (gameAudioSource != null && gameAudioSource.isPlaying) gameAudioSource.Stop();
         if (gameOverAudioSource != null) gameOverAudioSource.Play();
@@ -671,8 +671,7 @@ public class GameplayManager : Singleton<GameplayManager>
             if (player2Helix != null) player2Helix.enabled = false;
         }
 
-        if (scoreboardPanel != null) scoreboardPanel.SetActive(false);
-        if (scoreText != null) scoreText.gameObject.SetActive(false);
+       
 
         // Determine winner text and scores
         string winnerText = winner == LocalPlayerId ? "You won!" : "Opponent wins!";
@@ -721,7 +720,9 @@ public class GameplayManager : Singleton<GameplayManager>
             }
 
             endGameText.text = message;
+            UpdateScoreUI();
             GameOver.SetActive(true);
+            isGameEnded = true;
             Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [GameplayManager] GameOver set to active, text: {message}, Canvas active: {GameOver.activeSelf}");
         }
 

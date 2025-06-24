@@ -112,6 +112,7 @@ public class Connector : Singleton<Connector>, INetworkRunnerCallbacks
                     if (touchDeltaBuffer.Count > 0)
                     {
                         rotationInput = touchDeltaBuffer.Average();
+                        rotationInput = Mathf.Clamp(rotationInput, -10f, 10f);
                     }
                 }
                 else if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)

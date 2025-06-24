@@ -13,6 +13,8 @@ public class SP_BallMovement : MonoBehaviour
     private float _cylinderPositionY = -24f;
     public bool IsAI;
 
+    
+
     void Start()
     {
         if (_cylinder1 == null)
@@ -48,7 +50,7 @@ public class SP_BallMovement : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Ground"))
         {
-            _rigidbody.AddForce(Vector3.up * _jumpForce, ForceMode.Impulse);
+            _rigidbody.linearVelocity= Vector3.up * _jumpForce;
 
             if (!IsAI)
             {

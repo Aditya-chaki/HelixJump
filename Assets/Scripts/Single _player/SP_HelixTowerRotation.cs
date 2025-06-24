@@ -38,7 +38,7 @@ public class SP_HelixTowerRotation : MonoBehaviour
                 float deltaX =  touch.deltaPosition.x;
                 float swipeSpeed = deltaX / Time.deltaTime; // Calculate swipe speed in pixels per second
                 rotationInput = swipeSpeed / swipeSensitivity; // Scale to match input range
-                rotationInput = Mathf.Clamp(rotationInput, -1f, 1f); // Clamp to -1 to 1, like keyboard input
+                rotationInput = Mathf.Clamp(rotationInput, -10f, 10f); // Clamp to -1 to 1, like keyboard input
             }
         }
 

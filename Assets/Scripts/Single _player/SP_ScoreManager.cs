@@ -123,6 +123,7 @@ public class SP_ScoreManager : MonoBehaviour
             WinnerCard.SetActive(true);
             winnerText.text = "You Wins!";
             Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [SP_ScoreManager] Player 1 Wins with score: {player1Score}");
+            // IFrameBridge.Instance.PostMatchResult("won", player1Score, player2Score);
             StartCoroutine(PostMatchResultWithDelay("won", player1Score,player2Score));
         }
         else if (player2Score >= SCORE_TO_WIN)
@@ -131,14 +132,16 @@ public class SP_ScoreManager : MonoBehaviour
             WinnerCard.SetActive(true);
             winnerText.text = "Opponent Wins!";
             Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [SP_ScoreManager] Player 2 Wins with score: {player2Score}");
+            // IFrameBridge.Instance.PostMatchResult("lost", player1Score, player2Score);
             StartCoroutine(PostMatchResultWithDelay("lost", player1Score, player2Score));
         }
     }
 
     private IEnumerator PostMatchResultWithDelay(string result, int score , int score2)
     {
-        Time.timeScale = 0;
-        yield return new WaitForSeconds(5f);
+       
+        yield return new WaitForSeconds(2f);
+        Debug.Log("Game Ended");
         IFrameBridge.Instance.PostMatchResult(result, score, score2);
     }
 }

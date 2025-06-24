@@ -22,7 +22,7 @@ public class ScoreManager : NetworkBehaviour
         if (isGameEnded) return;
         if (Object != null && Object.HasStateAuthority)
         {
-            Player1Score++;
+            Player1Score = Player1Score + 2;
             Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [ScoreManager] Player 1 scored: {Player1Score}");
             if (Player1Score >= scoreToWin)
             {
@@ -30,27 +30,13 @@ public class ScoreManager : NetworkBehaviour
                 RPC_EndGame("Player1");
             }
         }
-        else if (Object == null) // Single-player mode
-        {
-            Player1Score++;
-            Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [ScoreManager] Player 1 scored: {Player1Score}");
-            if (Player1Score >= scoreToWin)
-            {
-                isGameEnded = true;
-                GameplayManager.Instance.EndGame("Player1");
-            }
-        }
         else
         {
-            RPC_IncrementPlayer1Score();
+            Debug.Log("Player 1 has no authority");
         }
+        
     }
 
-    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    private void RPC_IncrementPlayer1Score()
-    {
-        IncrementPlayer1Score();
-    }
 
     public void IncrementPlayer2Score()
     {
@@ -58,7 +44,7 @@ public class ScoreManager : NetworkBehaviour
         if (isGameEnded) return;
         if (Object != null && Object.HasStateAuthority)
         {
-            Player2Score++;
+            Player2Score = Player2Score+ 2;
             Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [ScoreManager] Player 2 scored: {Player2Score}");
             if (Player2Score >= scoreToWin)
             {
@@ -66,28 +52,14 @@ public class ScoreManager : NetworkBehaviour
                 RPC_EndGame("Player2");
             }
         }
-        else if (Object == null) // Single-player mode
-        {
-            Player2Score++;
-            Debug.Log($"[{System.DateTime.Now:yyyy-MM-dd HH:mm:ss}] [ScoreManager] Player 2 scored: {Player2Score}");
-            if (Player2Score >= scoreToWin)
-            {
-                isGameEnded = true;
-                GameplayManager.Instance.EndGame("Player2");
-            }
-        }
         else
         {
-            RPC_IncrementPlayer2Score();
+            Debug.Log("Player 2 has no authority");
         }
+        
     }
 
-    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    private void RPC_IncrementPlayer2Score()
-    {
-        IncrementPlayer2Score();
-    }
-
+    
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     public void RPC_EndGame(string winner)
     {

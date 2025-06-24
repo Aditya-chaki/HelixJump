@@ -721,7 +721,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   DontDestroyObjectOnLoad: 0
   networkRunner: {fileID: 1745308672}
-  swipeSensitivity: 0.5
+  swipeSensitivity: 0.05
   rotationSmoothing: 0.1
   touchDeltaBufferSize: 5
 --- !u!4 &1745308674
